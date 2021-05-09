@@ -18,6 +18,10 @@ LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars
 DS1302 rtc(11, 10, 9);
 Time t;
 
+// Temp&Humidity
+#include <DHT.h>
+DHT dht(3, DHT11);
+
 // Melody
 #define NOTE_B0  31
 #define NOTE_C1  33
@@ -253,12 +257,14 @@ void initScreen() {
   lcd.init();
   // Print a message to the LCD.
   lcd.begin(16,2);     
-  
+  lcd.display();
+  lcd.backlight();
   lcd.setCursor(0,0);
   lcd.print("Hello, Va1kar1e!");
   lcd.setCursor(0,1);
   lcd.print("My Clock");
-  delay(1000);
+//  lcd.scrollDisplayLeft();
+  delay(2000);
 }
 
 void initClock() {
@@ -309,11 +315,9 @@ void alarm() {
 static struct pt pt1, pt2, pt3, pt4;
 
 static int checkAlarm(struct pt *pt) {
-  static unsigned long lastTimeBlink = 0;
   t = rtc.getTime();
   PT_BEGIN(pt);
   while(1) {
-    lastTimeBlink = millis();
     PT_WAIT_UNTIL(pt, (t.hour == 8 && (t.min >= 30 || t.min % 5 == 0)) || (t.hour >= 9 && t.hour <= 22 && t.min == 0));
     alarm();
   }
@@ -335,37 +339,41 @@ static int displaySwitch(struct pt *pt) {
   PT_END(pt);
 }
 
-static int printDate(struct pt *pt) {
+static int printDateAndTime(struct pt *pt) {
   static unsigned long lastTimeBlink = 0;
   PT_BEGIN(pt);
   while(1) {
     lastTimeBlink = millis();
-    PT_WAIT_UNTIL(pt, millis() - lastTimeBlink > 500);
-    lcd.setCursor(0,0);
-    lcd.print("Date: ");
-    lcd.print(rtc.getDOWStr());
-    lastTimeBlink = millis();
-    PT_WAIT_UNTIL(pt, millis() - lastTimeBlink > 1500);
+    PT_WAIT_UNTIL(pt, millis() - lastTimeBlink > 1000);
     lcd.setCursor(0,0);
     lcd.print("Date: ");
     lcd.print(rtc.getDateStr());
     lastTimeBlink = millis();
     PT_WAIT_UNTIL(pt, millis() - lastTimeBlink > 1000);
-    lcd.setCursor(6,0);
-    lcd.print("          ");
+    lcd.setCursor(0,0);
+    lcd.print("Time: ");
+    lcd.print(rtc.getTimeStr());
+    lcd.print("   ");
   }
   PT_END(pt);
 }
 
-static int printTime(struct pt *pt) {
+static int printTempHumidity(struct pt *pt) {
   static unsigned long lastTimeBlink = 0;
   PT_BEGIN(pt);
   while(1) {
-    lcd.setCursor(0,1);
-    lcd.print("Time: ");
-    lcd.print(rtc.getTimeStr());
     lastTimeBlink = millis();
-    PT_WAIT_UNTIL(pt, millis() - lastTimeBlink > 500);
+    PT_WAIT_UNTIL(pt, millis() - lastTimeBlink > 1000);
+    lcd.setCursor(0,1);
+    lcd.print("Temp: ");
+    lcd.print(dht.readTemperature());
+    lcd.print(" Cel ");
+    lastTimeBlink = millis();
+    PT_WAIT_UNTIL(pt, millis() - lastTimeBlink > 1000);
+    lcd.setCursor(0,1);
+    lcd.print("Hum: ");
+    lcd.print(dht.readHumidity());
+    lcd.print(" %    ");
   }
   PT_END(pt);
 }
@@ -380,6 +388,8 @@ void setup() {
   // initialize the pushbutton pin as an input:
   pinMode(button, INPUT_PULLUP);
 
+  dht.begin();
+  
   initClock();
   initScreen();
 
@@ -390,8 +400,8 @@ void setup() {
 }
 
 void loop() {
-  printDate(&pt1);
-  printTime(&pt2);
+  printDateAndTime(&pt1);
+  printTempHumidity(&pt2);
   displaySwitch(&pt3);
   checkAlarm(&pt4);  
 }
