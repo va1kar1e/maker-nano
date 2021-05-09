@@ -208,7 +208,7 @@ const int led[] = {4,5,6,7};
 const int button = 2;
 
 bool showDisplay = true;
-bool displayStatus = false;
+int displayStatus = 0;
 
 void playMelody(int melody[], int notes, int tempo) {
   // tempo : change this to make the song slower or faster
@@ -275,9 +275,13 @@ void initClock() {
 }
 
 void checkDisplay() {
-  if (displayStatus) {
+  if (displayStatus == 1) {
     lcd.display();
     lcd.backlight();
+    digitalWrite(led[3], LOW);
+  } else if (displayStatus == 2) {
+    lcd.display();
+    lcd.noBacklight();
     digitalWrite(led[3], LOW);
   } else {
     lcd.noDisplay();
@@ -322,7 +326,11 @@ static int displaySwitch(struct pt *pt) {
     PT_WAIT_UNTIL(pt, digitalRead(button) == HIGH);
     checkDisplay();
     PT_WAIT_UNTIL(pt, digitalRead(button) == LOW);
-    displayStatus = !displayStatus;
+    if (displayStatus < 3) {
+      displayStatus += 1;
+    } else {
+      displayStatus = 0;
+    }
   }
   PT_END(pt);
 }
