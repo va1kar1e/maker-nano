@@ -371,9 +371,9 @@ static int printTempHumidity(struct pt *pt) {
     lastTimeBlink = millis();
     PT_WAIT_UNTIL(pt, millis() - lastTimeBlink > 1000);
     lcd.setCursor(0,1);
-    lcd.print("Hum: ");
+    lcd.print("Humid: ");
     lcd.print(dht.readHumidity());
-    lcd.print(" %    ");
+    lcd.print(" %  ");
   }
   PT_END(pt);
 }
