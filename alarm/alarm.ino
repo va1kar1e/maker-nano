@@ -286,30 +286,32 @@ void checkDisplay() {
   }  
 }
 
+void alarm() {
+    displayStatus = true;
+    digitalWrite(led[0], HIGH);
+    playMelody(nokiaMelody, nokiaMelodyLen, nokiaMelodyTempo);
+    delay(1000);
+    digitalWrite(led[1], HIGH);
+    playMelody(harryMelody, harryMelodyLen, harryMelodyTempo);
+    delay(1000);
+    digitalWrite(led[1], HIGH);
+    playMelody(starwarMelody, starwarMelodyLen, starwarMelodyTempo);
+    delay(250);
+    digitalWrite(led[0], LOW);
+    digitalWrite(led[1], LOW);
+    digitalWrite(led[2], LOW);
+}
+
 static struct pt pt1, pt2, pt3, pt4;
 
 static int checkAlarm(struct pt *pt) {
   static unsigned long lastTimeBlink = 0;
+  t = rtc.getTime();
   PT_BEGIN(pt);
   while(1) {
     lastTimeBlink = millis();
-    PT_WAIT_UNTIL(pt, millis() - lastTimeBlink > 30000);
-    t = rtc.getTime();
-    if ((t.hour == 8 && (t.min >= 30 || t.min % 5 == 0)) || (t.hour >= 9 && t.hour <= 20 && t.min == 0)) {
-      displayStatus = true;
-      digitalWrite(led[0], HIGH);
-      playMelody(nokiaMelody, nokiaMelodyLen, nokiaMelodyTempo);
-      delay(1000);
-      digitalWrite(led[1], HIGH);
-      playMelody(harryMelody, harryMelodyLen, harryMelodyTempo);
-      delay(1000);
-      digitalWrite(led[1], HIGH);
-      playMelody(starwarMelody, starwarMelodyLen, starwarMelodyTempo);
-      delay(250);
-      digitalWrite(led[0], LOW);
-      digitalWrite(led[1], LOW);
-      digitalWrite(led[2], LOW);
-     }
+    PT_WAIT_UNTIL(pt, (t.hour == 8 && (t.min >= 30 || t.min % 5 == 0)) || (t.hour >= 9 && t.hour <= 22 && t.min == 0));
+    alarm();
   }
   PT_END(pt);
 }
@@ -317,6 +319,7 @@ static int checkAlarm(struct pt *pt) {
 static int displaySwitch(struct pt *pt) {
   PT_BEGIN(pt);
   while (1) {
+    PT_WAIT_UNTIL(pt, digitalRead(button) == HIGH);
     checkDisplay();
     PT_WAIT_UNTIL(pt, digitalRead(button) == LOW);
     displayStatus = !displayStatus;
@@ -334,12 +337,12 @@ static int printDate(struct pt *pt) {
     lcd.print("Date: ");
     lcd.print(rtc.getDOWStr());
     lastTimeBlink = millis();
-    PT_WAIT_UNTIL(pt, millis() - lastTimeBlink > 500);
+    PT_WAIT_UNTIL(pt, millis() - lastTimeBlink > 1500);
     lcd.setCursor(0,0);
     lcd.print("Date: ");
     lcd.print(rtc.getDateStr());
     lastTimeBlink = millis();
-    PT_WAIT_UNTIL(pt, millis() - lastTimeBlink > 500);
+    PT_WAIT_UNTIL(pt, millis() - lastTimeBlink > 1000);
     lcd.setCursor(6,0);
     lcd.print("          ");
   }
