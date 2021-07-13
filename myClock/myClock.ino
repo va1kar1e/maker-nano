@@ -273,10 +273,10 @@ void initClock() {
   rtc.writeProtect(false);
 
   // The following lines can be commented out to use the values already stored in the DS1302
-  // Upload in 18:10:52 
-//  rtc.setDOW(SUNDAY);      // Set Day-of-Week to WEDNESDAY
-//  rtc.setTime(18, 11, 0);     // Set the time to 17:30:00 (24hr format)
-//  rtc.setDate(9, 5, 2021);   // Set the date to May 9th, 2021
+  // Upload in 20:38:52 
+//  rtc.setDOW(MONDAY);      // Set Day-of-Week to WEDNESDAY
+//  rtc.setTime(20, 39, 0);     // Set the time to 17:30:00 (24hr format)
+//  rtc.setDate(10, 5, 2021);   // Set the date to May 9th, 2021
   
 }
 
@@ -297,6 +297,8 @@ void checkDisplay() {
 }
 
 void alarm() {
+  t = rtc.getTime();
+  if ((t.hour == 8 && (t.min >= 30 || t.min % 5 == 0)) || (t.hour >= 9 && t.hour <= 23 && t.min == 0)) {
     displayStatus = true;
     digitalWrite(led[0], HIGH);
     playMelody(nokiaMelody, nokiaMelodyLen, nokiaMelodyTempo);
@@ -310,19 +312,10 @@ void alarm() {
     digitalWrite(led[0], LOW);
     digitalWrite(led[1], LOW);
     digitalWrite(led[2], LOW);
-}
-
-static struct pt pt1, pt2, pt3, pt4;
-
-static int checkAlarm(struct pt *pt) {
-  t = rtc.getTime();
-  PT_BEGIN(pt);
-  while(1) {
-    PT_WAIT_UNTIL(pt, (t.hour == 8 && (t.min >= 30 || t.min % 5 == 0)) || (t.hour >= 9 && t.hour <= 22 && t.min == 0));
-    alarm();
   }
-  PT_END(pt);
 }
+
+static struct pt pt1, pt2, pt3;
 
 static int displaySwitch(struct pt *pt) {
   PT_BEGIN(pt);
@@ -396,12 +389,12 @@ void setup() {
   PT_INIT(&pt1);
   PT_INIT(&pt2);
   PT_INIT(&pt3);
-  PT_INIT(&pt4);
 }
 
 void loop() {
   printDateAndTime(&pt1);
   printTempHumidity(&pt2);
   displaySwitch(&pt3);
-  checkAlarm(&pt4);  
+
+  alarm();
 }
