@@ -1,2 +1,3 @@
-# makerNano
-Maker Nano Project
+# Maker Nano
+
+About Maker Nano : Simplifying Arduino for Projects
